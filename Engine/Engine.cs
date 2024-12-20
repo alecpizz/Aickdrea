@@ -19,7 +19,8 @@ public unsafe class Engine
     private Player _player;
     private World _world;
     private Sound _sound;
-    private Model _city;
+    private Shader _pbrShader;
+    private List<PBRModel> _cityMeshes;
     private Shader _skyShader;
     private Model _skyBox;
     private Image _skyTexture;
@@ -73,27 +74,60 @@ public unsafe class Engine
         float dt = 1.0f / fps;
 
         _currentTime = (float)GetTime();
-   
 
-        _city = LoadModel(@"Resources\Models\GM Big City\scene.gltf");
-        for (int i = 0; i < _city.MaterialCount; i++)
+        _pbrShader = LoadShader(
+            @"Resources\Shaders\pbr.vert",
+            @"Resources\Shaders\pbr.frag"
+        );
+
+        Model cone = LoadModel(@"Resources\Models\ConeTest\ConeTestModel.glb");
+
+        Model city = LoadModel(@"Resources\Models\GM Big City\scene.gltf");
+        _cityMeshes = new List<PBRModel>();
+        
+        for (int i = 0; i < city.MeshCount; i++)
         {
-            if (_city.Materials[i].Maps != null)
-            {
-                _city.Materials[i].Maps[(int)MaterialMapIndex.Albedo].Texture.Mipmaps = 4;
-                GenTextureMipmaps(_city.Materials[i].Maps[(int)MaterialMapIndex.Albedo].Texture);
-                SetTextureFilter(_city.Materials[i].Maps[(int)MaterialMapIndex.Albedo].Texture,
-                    TextureFilter.Trilinear);
-            }
+            int matIndex = city.MeshMaterial[i];
+            Material mat = city.Materials[matIndex];
+            
+            Model chunk = LoadModelFromMesh(city.Meshes[i]);
+
+            PBRModel pbrModel = new PBRModel(chunk);
+            
+            /*pbrModel.SetAlbedo(
+                city.Materials[matIndex].Maps[(int)MaterialMapIndex.Albedo].Texture,
+                true,
+                TextureFilter.Bilinear
+            );
+            pbrModel.SetNormal(
+                city.Materials[matIndex].Maps[(int)MaterialMapIndex.Normal].Texture
+            );*/
+            
+            _cityMeshes.Add(pbrModel);
+        }
+        
+        for (int i = 0; i < cone.MeshCount; i++)
+        {
+            int matIndex = cone.MeshMaterial[i];
+            Material mat = cone.Materials[matIndex];
+            
+            Model chunk = LoadModelFromMesh(cone.Meshes[i]);
+
+            PBRModel pbrModel = new PBRModel(cone);
+            pbrModel.SetNormal(LoadTexture(
+                @"Resources\Models\ConeTest\tmjjddkhw_2K_Normal_LOD1.jpg"
+            ));
+            
+            _cityMeshes.Add(pbrModel);
         }
        
 
         _cityBody = _world.CreateRigidBody();
         List<JTriangle> tris = new List<JTriangle>();
 
-        for (int i = 0; i < _city.MeshCount; i++)
+        for (int i = 0; i < city.MeshCount; i++)
         {
-            var mesh = _city.Meshes[i];
+            var mesh = city.Meshes[i];
             Vector3* vertdata = (Vector3*)mesh.Vertices;
             if (mesh.Indices != null)
             {
@@ -124,7 +158,7 @@ public unsafe class Engine
 
 
         _cityBody.AddShape(triangleShapes, false);
-        _cityBody.Position = _city.Transform.Translation.ToJVector();
+        _cityBody.Position = city.Transform.Translation.ToJVector();
 
         _cityBody.IsStatic = true;
         _physDrawer = new PhysDrawer();
@@ -225,8 +259,10 @@ public unsafe class Engine
                 body.DebugDraw(_physDrawer);
             }
 
-            DrawModelEx(_city, Vector3.Zero,
-                Vector3.UnitY, 0.0f, Vector3.One, Color.White);
+            foreach (PBRModel model in _cityMeshes)
+            {
+                model.DrawModel(ref _pbrShader);
+            }
 
             DrawGrid(10, 1.0f);
 

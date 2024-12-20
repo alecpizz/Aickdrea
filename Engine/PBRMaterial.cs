@@ -1,51 +1,88 @@
-﻿namespace Engine;
+﻿using System.Numerics;
+
+namespace Engine;
 using Raylib_cs.BleedingEdge;
 using rlImGui_cs;
 
 using static Raylib_cs.BleedingEdge.Raylib;
 
-public class PBRMaterial
+public unsafe class PBRModel
 {
-    public struct TextureProperty
+    public struct TextureSlot
     {
-        public Color Color;
-        public bool UseTexture = false;
         public Texture2D Texture;
+        public int Location;
+    }
 
-        public TextureProperty()
+    private Material _modelMaterial;
+    private Model _model;
+
+    private TextureSlot _albedo;
+    private TextureSlot _normal;
+
+    public PBRModel(Model model, Shader shader)
+    {
+        _model = model;
+
+        _modelMaterial = LoadMaterialDefault();
+        _modelMaterial.Shader = shader;
+        
+        GetShaderLocations(shader);
+        GrabTexturesFromModel();
+
+        _model.Materials[0] = _modelMaterial;
+    }
+
+    private void GetShaderLocations(Shader shader)
+    {
+        _albedo.Location = GetShaderLocation(shader, "albedoMap");
+        _normal.Location = GetShaderLocation(shader, "normalMap");
+    }
+
+    private unsafe void GrabTexturesFromModel()
+    {
+        if (_model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture.Id != 0)
         {
-            Color = Color.White;
-            UseTexture = false;
+            _albedo.Texture = _model.Materials[0].Maps[(int)MaterialMapIndex.Albedo].Texture;
+        }
+        
+        if (_model.Materials[0].Maps[(int)MaterialMapIndex.Normal].Texture.Id != 0)
+        {
+            _normal.Texture = _model.Materials[0].Maps[(int)MaterialMapIndex.Normal].Texture;
         }
     }
 
-    private TextureProperty _albedo;
-    private TextureProperty _normal;
-
-    public PBRMaterial()
+    public void DrawModel(ref Shader shader)
     {
-        _albedo = new TextureProperty();
-        
-        _normal = new TextureProperty();
-        _normal.Color = new Color(0.5F, 0.5F, 1.0F, 1.0F);
+        // Draw model
+        Raylib.DrawModelEx(
+            _model,
+            Vector3.Zero,
+            Vector3.UnitY,
+            0.0F,
+            Vector3.One,
+            Color.Beige
+        );
     }
 
-    public void SetAlbedo(Color color)
+    public void SetAlbedo(
+        Texture2D texture, 
+        bool genMipmaps, 
+        TextureFilter filterMode)
     {
-        _albedo.Color = color;
+        if (genMipmaps)
+        {
+            texture.Mipmaps = 4;
+            GenTextureMipmaps(texture);
+        }
+        
+        SetTextureFilter(texture, filterMode);
+        
+        _modelMaterial.Maps[(int)MaterialMapIndex.Albedo].Texture = texture;
     }
     
-    public void SetAlbedo(Color color, Texture2D tex)
+    public void SetNormal(Texture2D texture)
     {
-        _albedo.UseTexture = true;
-        _albedo.Texture = tex;
-        
-        SetAlbedo(color);
-    }
-
-    public void SetNormal(Texture2D tex)
-    {
-        _normal.UseTexture = true;
-        _normal.Texture = tex;
+        _normal.Texture = texture;
     }
 }
