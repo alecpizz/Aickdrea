@@ -65,7 +65,10 @@ public class Engine
         //gm big city
         _entities.Add(new StaticEntity(@"Resources\Models\GM Big City\scene.gltf", Vector3.Zero));
         //cone test model
-        StaticEntity cone = new StaticEntity(@"Resources\Models\ConeTest\ConeTestModel.gltf", Vector3.Zero);
+        StaticEntity cone = new StaticEntity(
+            @"Resources\Models\ConeTest\ConeTestModel.gltf", 
+            Vector3.Zero
+        );
         cone.TestEnablePBRMaterial();
         _entities.Add(cone);
         //player

@@ -102,7 +102,7 @@ public class StaticEntity : Entity
                 _model.Materials[i].Maps[(int)MaterialMapIndex.Albedo].Texture,
                 _model.Materials[i].Maps[(int)MaterialMapIndex.Normal].Texture,
                 _model.Materials[i].Maps[(int)MaterialMapIndex.Roughness].Texture,
-                TextureFilter.Bilinear
+                TextureFilter.Anisotropic16X
             );
         }
     }

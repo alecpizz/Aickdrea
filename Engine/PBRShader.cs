@@ -1,4 +1,6 @@
-﻿namespace Engine;
+﻿using System.Numerics;
+
+namespace Engine;
 using Raylib_cs.BleedingEdge;
 using rlImGui_cs;
 using static Raylib_cs.BleedingEdge.Raylib;
@@ -16,6 +18,15 @@ public unsafe class PBRShader
             "Resources/Shaders/pbr.vert",
             "Resources/Shaders/pbr.frag"
         );
+        
+        // Setup lighting
+        Light.CreateLight(
+            LightType.Directional,
+            Vector3.Zero,
+            new Vector3(1.0F, 1.0F, -2.0F),
+            Color.White,
+            shader
+        );
 
         shader.Locs[(int)ShaderLocationIndex.MapAlbedo] = GetShaderLocation(
             shader,
@@ -28,6 +39,10 @@ public unsafe class PBRShader
         shader.Locs[(int)ShaderLocationIndex.MapRoughness] = GetShaderLocation(
             shader,
             "roughnessMap"
+        );
+        shader.Locs[(int)ShaderLocationIndex.VectorView] = GetShaderLocation(
+            shader,
+            "viewPos"
         );
         
         // Init material
