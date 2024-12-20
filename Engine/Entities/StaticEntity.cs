@@ -94,6 +94,19 @@ public class StaticEntity : Entity
         _rigidBody.IsStatic = true;
     }
 
+    public unsafe void TestEnablePBRMaterial()
+    {
+        for (int i = 0; i < _model.MaterialCount; i++)
+        {
+            _model.Materials[i] = PBRShader.InitPBRMaterial(
+                _model.Materials[i].Maps[(int)MaterialMapIndex.Albedo].Texture,
+                _model.Materials[i].Maps[(int)MaterialMapIndex.Normal].Texture,
+                _model.Materials[i].Maps[(int)MaterialMapIndex.Roughness].Texture,
+                TextureFilter.Bilinear
+            );
+        }
+    }
+
     public override unsafe void OnRender()
     {
         //TIL that the sys numerics matrix implementation doesn't work with raylib!

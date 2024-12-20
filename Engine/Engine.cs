@@ -64,6 +64,10 @@ public class Engine
         _entities.Add(new SkyboxEntity(@"Resources\Textures\cubemap.png"));
         //gm big city
         _entities.Add(new StaticEntity(@"Resources\Models\GM Big City\scene.gltf", Vector3.Zero));
+        //cone test model
+        StaticEntity cone = new StaticEntity(@"Resources\Models\ConeTest\ConeTestModel.gltf", Vector3.Zero);
+        cone.TestEnablePBRMaterial();
+        _entities.Add(cone);
         //player
         _entities.Add(new PlayerEntity(new Vector3(2.0f, 4.0f, 6.0f)));
         Time.FixedDeltaTime = dt;
