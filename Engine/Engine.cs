@@ -118,6 +118,11 @@ public class Engine
                     _uiActive = !_uiActive;
                    
                 }
+
+                if (IsKeyPressed(KeyboardKey.F11))
+                {
+                    ToggleBorderlessWindowed();
+                }
             }
 
 

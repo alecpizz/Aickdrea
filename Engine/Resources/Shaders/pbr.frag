@@ -25,7 +25,7 @@ in vec3 fragBinormal;
 // Inputs
 uniform sampler2D albedoMap;
 uniform sampler2D normalMap;
-uniform sampler2D roughnessMap;
+uniform sampler2D ormMap;
 
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
@@ -69,7 +69,7 @@ vec3 ReadNormalMap(float intensity)
 
 vec3 ReadORM()
 {
-    return texture(roughnessMap, fragTexCoord).rgb;
+    return texture(ormMap, fragTexCoord).rgb;
 }
 
 float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -167,7 +167,7 @@ void main()
 
     // END LIGHT LOOP
 
-    vec3 surroundingLight = vec3(0.03);
+    vec3 surroundingLight = vec3(0.25);
     vec3 ambient = surroundingLight * albedo * ambientOcclusion;
 
     vec3 color = ambient + Lo;
