@@ -27,6 +27,9 @@ uniform sampler2D albedoMap;
 uniform sampler2D normalMap;
 uniform sampler2D ormMap;
 
+uniform samplerCube envMap;
+uniform samplerCube irradianceMap;
+
 // Input lighting values
 uniform Light lights[MAX_LIGHTS];
 uniform vec4 ambient;
@@ -34,6 +37,8 @@ uniform vec3 viewPos;
 
 // Constants
 const float PI = 3.14159265359;
+const vec2 INV_ATAN = vec2(0.1591, 0.3183);
+const int SAMPLES = 25;
 
 // Output fragment color
 out vec4 finalColor;
@@ -111,6 +116,48 @@ vec3 FresnelSchlick(float cosTheta, vec3 F0)
     return F0 + (1.0 - F0) * max(1.0 - cosTheta, 0.0);
 }
 
+vec2 SampleSphericalMap(vec3 v)
+{
+    vec2 uv = vec2(atan(v.z, v.x), asin(v.y));
+    uv *= INV_ATAN;
+    uv *= 0.5;
+
+    return uv;
+}
+
+vec3 GatherIrradiance()
+{
+    vec3 normal = normalize(fragPos);
+    
+    vec3 irradiance = vec3(0.0);
+
+    vec3 up = vec3(0.0, 1.0, 0.0);
+    vec3 right = normalize(cross(up, normal));
+    up = normalize(cross(normal, right));
+
+    float sampleDelta = 0.025;
+    float nrSamples = 0.0;
+
+    for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta)
+    {
+        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta)
+        {
+            vec3 tangentSample = vec3(
+                sin(theta) * cos(phi), 
+                sin(theta) * sin(phi), 
+                cos(theta)
+            );
+            vec3 sampleVec = tangentSample.x * right + tangentSample.y * 
+                up + tangentSample.z * normal; 
+
+            irradiance += texture(envMap, sampleVec).rgb * cos(theta) * sin(theta);
+            nrSamples++;
+        }
+    }
+
+    return PI * irradiance * (1.0 / float(nrSamples));
+}
+
 void main()
 {
     vec3 albedo = ReadAlbedoMap();
@@ -124,6 +171,14 @@ void main()
 
     vec3 N = ReadNormalMap(1.0);
     vec3 V = normalize(viewPos - fragPos);
+
+    // TEST REMOVE LATER
+
+    vec3 irradiance = texture(irradianceMap, fragNormal).rgb;
+    finalColor = vec4(irradiance, 1.0);
+    return;
+
+    ///
 
     vec3 F0 = vec3(0.04);
     F0 = mix(F0, albedo, metallic);

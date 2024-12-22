@@ -28,6 +28,10 @@ public unsafe class PBRShader
             shader
         );
 
+        Texture2D environmentMap = LoadTexture(
+            @"Resources/Textures/petit_port_2k.hdr"
+        );
+
         shader.Locs[(int)ShaderLocationIndex.MapAlbedo] = GetShaderLocation(
             shader,
             "albedoMap"
@@ -43,6 +47,14 @@ public unsafe class PBRShader
         shader.Locs[(int)ShaderLocationIndex.VectorView] = GetShaderLocation(
             shader,
             "viewPos"
+        );
+        shader.Locs[(int)ShaderLocationIndex.MapCubemap] = GetShaderLocation(
+            shader,
+            "envMap"
+        );
+        shader.Locs[(int)ShaderLocationIndex.MapIrradiance] = GetShaderLocation(
+            shader,
+            "irradianceMap"
         );
         
         // Init material
@@ -60,7 +72,41 @@ public unsafe class PBRShader
         GenTextureMipmaps(mat.Maps[(int)MaterialMapIndex.Albedo].Texture);
         GenTextureMipmaps(mat.Maps[(int)MaterialMapIndex.Normal].Texture);
         GenTextureMipmaps(mat.Maps[(int)MaterialMapIndex.Roughness].Texture);
+        
+        LoadEnvironmentMap(ref mat);
 
         return mat;
+    }
+
+    private static void LoadEnvironmentMap(ref Material mat)
+    {
+        // Load equirectangular map as cubemap
+        Image envImage = LoadImage(
+            @"Resources/Textures/petit_port_2k_spherical.png"
+        );
+
+        Texture2D envTexture = LoadTextureCubemap(
+            envImage,
+            CubemapLayout.CrossFourByThree
+        );
+        
+        // Create convoluted texture from cubemap
+        Texture2D irradianceTexture = envTexture;
+        
+        irradianceTexture.Width = 64;
+        irradianceTexture.Height = 32;
+        
+        // Send to material
+        mat.Maps[(int)MaterialMapIndex.Cubemap].Texture = envTexture;
+        mat.Maps[(int)MaterialMapIndex.Irradiance].Texture = irradianceTexture;
+        
+        SetTextureFilter(
+            mat.Maps[(int)MaterialMapIndex.Cubemap].Texture, 
+            TextureFilter.Bilinear
+        );
+        SetTextureFilter(
+            mat.Maps[(int)MaterialMapIndex.Irradiance].Texture, 
+            TextureFilter.Bilinear
+        );
     }
 }
