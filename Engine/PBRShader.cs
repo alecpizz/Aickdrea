@@ -1,12 +1,18 @@
 ﻿using System.Numerics;
-
-namespace Engine;
 using Raylib_cs.BleedingEdge;
 using rlImGui_cs;
 using static Raylib_cs.BleedingEdge.Raylib;
+using OpenTK.Graphics.OpenGL;
+using InternalFormat = OpenTK.Graphics.OpenGLES2.InternalFormat;
+using PixelFormat = OpenTK.Graphics.OpenGL.PixelFormat;
+
+namespace Engine;
 
 public unsafe class PBRShader
 {
+    private readonly int CUBEMAP_SIZE = 1024;
+    private readonly int IRRADIANCE_SIZE = 32; 
+    
     public static Material InitPBRMaterial(
         Texture2D albedo,
         Texture2D normal,
@@ -26,10 +32,6 @@ public unsafe class PBRShader
             new Vector3(1.0F, 1.0F, -2.0F),
             Color.White,
             shader
-        );
-
-        Texture2D environmentMap = LoadTexture(
-            @"Resources/Textures/petit_port_2k.hdr"
         );
 
         shader.Locs[(int)ShaderLocationIndex.MapAlbedo] = GetShaderLocation(
@@ -73,40 +75,61 @@ public unsafe class PBRShader
         GenTextureMipmaps(mat.Maps[(int)MaterialMapIndex.Normal].Texture);
         GenTextureMipmaps(mat.Maps[(int)MaterialMapIndex.Roughness].Texture);
         
-        LoadEnvironmentMap(ref mat);
+        //LoadEnvironmentMap(ref mat);
 
         return mat;
     }
 
-    private static void LoadEnvironmentMap(ref Material mat)
+    private static void LoadEnvironmentMap(int cubemapSize)
     {
-        // Load equirectangular map as cubemap
-        Image envImage = LoadImage(
-            @"Resources/Textures/petit_port_2k_spherical.png"
+        Shader cubeShader = LoadShader(
+            "Resources/Shaders/PBRIncludes/cubemap.vert",
+            "Resources/Shaders/PBRIncludes/cubemap.frag"
         );
 
-        Texture2D envTexture = LoadTextureCubemap(
-            envImage,
-            CubemapLayout.CrossFourByThree
+        
+
+        int hdrTexture;
+
+        
+        
+        // Render test cube
+        
+        
+        // Create projection
+        Matrix4x4 captureProj = Matrix4x4.CreatePerspectiveFieldOfViewLeftHanded(
+            90.0F,
+            1.0F,
+            0.01F,
+            1000.0F
         );
-        
-        // Create convoluted texture from cubemap
-        Texture2D irradianceTexture = envTexture;
-        
-        irradianceTexture.Width = 64;
-        irradianceTexture.Height = 32;
-        
-        // Send to material
-        mat.Maps[(int)MaterialMapIndex.Cubemap].Texture = envTexture;
-        mat.Maps[(int)MaterialMapIndex.Irradiance].Texture = irradianceTexture;
-        
-        SetTextureFilter(
-            mat.Maps[(int)MaterialMapIndex.Cubemap].Texture, 
-            TextureFilter.Bilinear
-        );
-        SetTextureFilter(
-            mat.Maps[(int)MaterialMapIndex.Irradiance].Texture, 
-            TextureFilter.Bilinear
-        );
+        captureProj = Matrix4x4.Transpose(captureProj);
+        Matrix4x4[] captureViews =
+        [
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(1.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, -1.0F, 0.0F)),
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(-1.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, -1.0F, 0.0F)),
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, 1.0F, 0.0F),
+                new Vector3(0.0F, 0.0F, 1.0F)),
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, -1.0F, 0.0F),
+                new Vector3(0.0F, 0.0F, -1.0F)),
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, 0.0F, 1.0F),
+                new Vector3(0.0F, -1.0F, 0.0F)),
+            Matrix4x4.CreateLookAt(
+                new Vector3(0.0F, 0.0F, 0.0F),
+                new Vector3(0.0F, 0.0F, -1.0F),
+                new Vector3(0.0F, -1.0F, 0.0F))
+        ];
     }
 }

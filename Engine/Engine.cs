@@ -61,7 +61,7 @@ public class Engine
 
         _currentTime = (float)GetTime();
         //skybox
-        _entities.Add(new SkyboxEntity(@"Resources\Textures\cubemap.png"));
+        _entities.Add(new SkyboxEntityPBR(@"Resources\Textures\petit_port_2k.png"));
         //gm big city
         _entities.Add(new StaticEntity(@"Resources\Models\GM Big City\scene.gltf", Vector3.Zero));
         //cone test model
