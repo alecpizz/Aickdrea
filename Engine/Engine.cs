@@ -7,6 +7,10 @@ using Jitter2.Dynamics;
 using Jitter2.LinearMath;
 using Raylib_cs.BleedingEdge;
 using rlImGui_cs;
+using OpenTK;
+using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
+using OpenTK.Windowing.GraphicsLibraryFramework;
 using static Raylib_cs.BleedingEdge.Raylib;
 
 namespace Engine;
@@ -55,6 +59,9 @@ public class Engine
         rlImGui.Setup();
         ImGUIUtils.SetupSteamTheme();
         
+        // Send raylib's OpenGL context to OpenTK
+        IBindingsContext context = new OpenTKBindingContext();
+        GLLoader.LoadBindings(context);
 
         float t = 0.0f;
         float dt = 1.0f / fps;

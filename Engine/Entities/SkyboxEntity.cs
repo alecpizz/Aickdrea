@@ -2,9 +2,9 @@
 using Raylib_cs.BleedingEdge;
 using static Raylib_cs.BleedingEdge.Raylib;
 
-namespace Engine.Entities;
+namespace Engine;
 
-public class SkyboxEntity : Entity
+public class SkyboxEntity : Entities.Entity
 {
     private Shader _skyShader;
     private Texture2D _cubeMap;
